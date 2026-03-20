@@ -20,7 +20,7 @@ GEMINI_API_KEY    = os.environ.get("GEMINI_API_KEY", "")
 
 def extract_tasks_from_meeting(meeting_text: str) -> list[dict]:
     genai.configure(api_key=GEMINI_API_KEY)
-    model = genai.GenerativeModel("gemini-2.5-flash-lite-preview-06-17")
+    model = genai.GenerativeModel("gemini-2.0-flash-lite")
 
     prompt = (
         "Extract tasks from this meeting. Reply ONLY with a JSON array, no markdown.\n"
