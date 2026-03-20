@@ -1,7 +1,7 @@
 import os
 import json
 import requests
-import google.generativeai as genai
+from groq import Groq
 from flask import Flask, request, jsonify, render_template
 
 app = Flask(__name__)
@@ -15,23 +15,47 @@ CLICKUP_LISTS = {
 }
 
 CLICKUP_API_TOKEN = os.environ.get("CLICKUP_API_TOKEN", "")
-GEMINI_API_KEY    = os.environ.get("GEMINI_API_KEY", "")
+GROQ_API_KEY      = os.environ.get("GROQ_API_KEY", "")
+
+client = Groq(api_key=GROQ_API_KEY)
+
+
+def transcribe_audio(audio_file) -> str:
+    """Transcribe audio file to text using Groq Whisper."""
+    transcription = client.audio.transcriptions.create(
+        file=audio_file,
+        model="whisper-large-v3",
+        language="ar",
+        response_format="text"
+    )
+    return transcription
 
 
 def extract_tasks_from_meeting(meeting_text: str) -> list[dict]:
-    genai.configure(api_key=GEMINI_API_KEY)
-    model = genai.GenerativeModel("gemini-2.0-flash")
-
-    prompt = (
-        "Extract tasks from this meeting. Reply ONLY with a JSON array, no markdown.\n"
-        "Each item: {title, description, assignee (sudheesh/bader/yousef/me/general), "
-        "priority (urgent/high/normal/low), due_date (YYYY-MM-DD or null)}\n\n"
-        "Meeting:\n" + meeting_text
+    """Extract tasks from meeting text using Groq LLM."""
+    response = client.chat.completions.create(
+        model="llama-3.1-8b-instant",
+        messages=[
+            {
+                "role": "system",
+                "content": (
+                    "Extract tasks from meeting notes. "
+                    "Reply ONLY with a JSON array, no markdown. "
+                    "Each item: {title, description, "
+                    "assignee (sudheesh/bader/yousef/me/general), "
+                    "priority (urgent/high/normal/low), "
+                    "due_date (YYYY-MM-DD or null)}"
+                )
+            },
+            {
+                "role": "user",
+                "content": meeting_text
+            }
+        ],
+        temperature=0.1
     )
 
-    response = model.generate_content(prompt)
-    raw = response.text.strip()
-
+    raw = response.choices[0].message.content.strip()
     if raw.startswith("```"):
         raw = raw.split("```")[1]
         if raw.startswith("json"):
@@ -42,8 +66,9 @@ def extract_tasks_from_meeting(meeting_text: str) -> list[dict]:
 
 
 def create_clickup_task(task: dict) -> dict:
-    assignee  = task.get("assignee", "general")
-    list_id   = CLICKUP_LISTS.get(assignee, CLICKUP_LISTS["general"])
+    """Create a task in ClickUp under the appropriate list."""
+    assignee = task.get("assignee", "general")
+    list_id  = CLICKUP_LISTS.get(assignee, CLICKUP_LISTS["general"])
     priority_map = {"urgent": 1, "high": 2, "normal": 3, "low": 4}
 
     payload = {
@@ -68,19 +93,38 @@ def create_clickup_task(task: dict) -> dict:
     ).json()
 
 
+# ── Routes ───────────────────────────────────────────────────────────────────
+
 @app.route("/")
 def index():
-    return render_template("index.html", lists=CLICKUP_LISTS)
+    return render_template("index.html")
+
+
+@app.route("/api/transcribe", methods=["POST"])
+def api_transcribe():
+    """Transcribe uploaded audio file."""
+    if "audio" not in request.files:
+        return jsonify({"error": "No audio file provided"}), 400
+    if not GROQ_API_KEY:
+        return jsonify({"error": "GROQ_API_KEY not configured"}), 500
+
+    audio_file = request.files["audio"]
+    try:
+        text = transcribe_audio((audio_file.filename, audio_file.read(), audio_file.content_type))
+        return jsonify({"text": text})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 
 @app.route("/api/extract", methods=["POST"])
 def api_extract():
+    """Extract tasks from meeting text."""
     data = request.get_json()
     meeting_text = data.get("meeting_text", "").strip()
     if not meeting_text:
         return jsonify({"error": "Meeting text is required"}), 400
-    if not GEMINI_API_KEY:
-        return jsonify({"error": "GEMINI_API_KEY not configured"}), 500
+    if not GROQ_API_KEY:
+        return jsonify({"error": "GROQ_API_KEY not configured"}), 500
     try:
         tasks = extract_tasks_from_meeting(meeting_text)
         return jsonify({"tasks": tasks})
@@ -92,6 +136,7 @@ def api_extract():
 
 @app.route("/api/create-tasks", methods=["POST"])
 def api_create_tasks():
+    """Create approved tasks in ClickUp."""
     data  = request.get_json()
     tasks = data.get("tasks", [])
     if not tasks:
