@@ -1,8 +1,8 @@
 import os
 import json
 import requests
+import google.generativeai as genai
 from flask import Flask, request, jsonify, render_template
-from anthropic import Anthropic
 
 app = Flask(__name__)
 
@@ -16,15 +16,16 @@ CLICKUP_LISTS = {
 }
 
 CLICKUP_API_TOKEN = os.environ.get("CLICKUP_API_TOKEN", "")
-ANTHROPIC_API_KEY = os.environ.get("ANTHROPIC_API_KEY", "")
-
-anthropic_client = Anthropic(api_key=ANTHROPIC_API_KEY)
+GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", "")
 
 
 def extract_tasks_from_meeting(meeting_text: str) -> list[dict]:
-    """Use Claude to extract tasks from meeting notes."""
-    
-    system_prompt = """You are an expert at analyzing meeting notes and extracting actionable tasks.
+    """Use Gemini to extract tasks from meeting notes."""
+
+    genai.configure(api_key=GEMINI_API_KEY)
+    model = genai.GenerativeModel("gemini-1.5-flash")
+
+    prompt = """You are an expert at analyzing meeting notes and extracting actionable tasks.
 
 You must respond ONLY with a valid JSON array, no markdown, no explanation, just raw JSON.
 
@@ -37,7 +38,7 @@ Each task object must have:
 
 Known team members:
 - sudheesh: Sudheesh
-- bader: Bader  
+- bader: Bader
 - yousef: Yousef
 - me: the meeting organizer / "me" / "I"
 - general: shared, unassigned, or company-wide tasks
@@ -51,28 +52,22 @@ Example output:
     "priority": "high",
     "due_date": "2026-03-25"
   }
-]"""
+]
 
-    response = anthropic_client.messages.create(
-        model="claude-sonnet-4-20250514",
-        max_tokens=2000,
-        system=system_prompt,
-        messages=[
-            {
-                "role": "user",
-                "content": f"Extract all tasks and responsibilities from this meeting:\n\n{meeting_text}"
-            }
-        ]
-    )
+Now extract all tasks from this meeting:
 
-    raw = response.content[0].text.strip()
+""" + meeting_text
+
+    response = model.generate_content(prompt)
+    raw = response.text.strip()
+
     # Strip markdown fences if present
     if raw.startswith("```"):
         raw = raw.split("```")[1]
         if raw.startswith("json"):
             raw = raw[4:]
     raw = raw.strip()
-    
+
     tasks = json.loads(raw)
     return tasks
 
@@ -130,8 +125,8 @@ def api_extract():
     if not meeting_text:
         return jsonify({"error": "Meeting text is required"}), 400
     
-    if not ANTHROPIC_API_KEY:
-        return jsonify({"error": "ANTHROPIC_API_KEY not configured"}), 500
+    if not GEMINI_API_KEY:
+        return jsonify({"error": "GEMINI_API_KEY not configured"}), 500
 
     try:
         tasks = extract_tasks_from_meeting(meeting_text)
