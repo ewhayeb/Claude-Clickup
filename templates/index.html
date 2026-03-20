@@ -6,351 +6,114 @@
   <title>Meeting → ClickUp Tasks</title>
   <style>
     :root {
-      --bg: #0f1117;
-      --surface: #1a1d27;
-      --surface2: #22263a;
-      --border: #2e3250;
-      --accent: #7c5cfc;
-      --accent-hover: #9b82fd;
-      --success: #22c55e;
-      --warning: #f59e0b;
-      --danger: #ef4444;
-      --text: #e2e8f0;
-      --muted: #8892a4;
+      --bg: #0f1117; --surface: #1a1d27; --surface2: #22263a;
+      --border: #2e3250; --accent: #7c5cfc; --accent-hover: #9b82fd;
+      --success: #22c55e; --danger: #ef4444; --text: #e2e8f0; --muted: #8892a4;
       --radius: 12px;
     }
-
     * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', system-ui, sans-serif; min-height: 100vh; }
 
-    body {
-      background: var(--bg);
-      color: var(--text);
-      font-family: 'Segoe UI', system-ui, sans-serif;
-      min-height: 100vh;
-    }
-
-    header {
-      background: var(--surface);
-      border-bottom: 1px solid var(--border);
-      padding: 18px 32px;
-      display: flex;
-      align-items: center;
-      gap: 14px;
-    }
-
-    header .logo {
-      width: 38px; height: 38px;
-      background: var(--accent);
-      border-radius: 10px;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 20px;
-    }
-
+    header { background: var(--surface); border-bottom: 1px solid var(--border); padding: 18px 32px; display: flex; align-items: center; gap: 14px; }
+    header .logo { width: 38px; height: 38px; background: var(--accent); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 20px; }
     header h1 { font-size: 1.25rem; font-weight: 700; }
     header p  { font-size: 0.8rem; color: var(--muted); }
 
     .container { max-width: 1100px; margin: 0 auto; padding: 32px 24px; }
 
-    /* Steps */
-    .steps {
-      display: flex;
-      gap: 0;
-      margin-bottom: 36px;
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      overflow: hidden;
-    }
-
-    .step {
-      flex: 1;
-      padding: 14px 18px;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      cursor: pointer;
-      border-right: 1px solid var(--border);
-      opacity: 0.45;
-      transition: opacity .2s;
-    }
+    .steps { display: flex; margin-bottom: 36px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
+    .step { flex: 1; padding: 14px 18px; display: flex; align-items: center; gap: 10px; border-right: 1px solid var(--border); opacity: 0.45; transition: opacity .2s; }
     .step:last-child { border-right: none; }
     .step.active { opacity: 1; background: var(--surface2); }
     .step.done   { opacity: 0.7; }
-
-    .step-num {
-      width: 26px; height: 26px;
-      border-radius: 50%;
-      background: var(--border);
-      display: flex; align-items: center; justify-content: center;
-      font-size: 12px; font-weight: 700;
-      flex-shrink: 0;
-    }
+    .step-num { width: 26px; height: 26px; border-radius: 50%; background: var(--border); display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; flex-shrink: 0; }
     .step.active .step-num { background: var(--accent); }
     .step.done   .step-num { background: var(--success); }
-
     .step-label { font-size: 0.85rem; font-weight: 600; }
 
-    /* Panels */
     .panel { display: none; }
     .panel.active { display: block; }
 
-    /* Input panel */
-    .input-card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 28px;
-    }
+    .input-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 28px; }
 
-    label {
-      display: block;
-      font-size: 0.85rem;
-      font-weight: 600;
-      color: var(--muted);
-      margin-bottom: 8px;
-      text-transform: uppercase;
-      letter-spacing: .05em;
+    /* Audio upload area */
+    .upload-area {
+      border: 2px dashed var(--border); border-radius: 10px; padding: 28px;
+      text-align: center; cursor: pointer; transition: all .2s; margin-bottom: 20px;
     }
+    .upload-area:hover { border-color: var(--accent); background: rgba(124,92,252,.05); }
+    .upload-area.dragover { border-color: var(--accent); background: rgba(124,92,252,.1); }
+    .upload-area .icon { font-size: 36px; margin-bottom: 10px; }
+    .upload-area p { color: var(--muted); font-size: 0.9rem; }
+    .upload-area strong { color: var(--text); }
+    #audioFileInput { display: none; }
 
-    textarea {
-      width: 100%;
-      min-height: 280px;
-      background: var(--surface2);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 16px;
-      color: var(--text);
-      font-size: 0.95rem;
-      line-height: 1.6;
-      resize: vertical;
-      outline: none;
-      transition: border-color .2s;
-    }
+    .divider { display: flex; align-items: center; gap: 14px; margin: 20px 0; color: var(--muted); font-size: 0.85rem; }
+    .divider::before, .divider::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+    label { display: block; font-size: 0.85rem; font-weight: 600; color: var(--muted); margin-bottom: 8px; text-transform: uppercase; letter-spacing: .05em; }
+    textarea { width: 100%; min-height: 200px; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; padding: 16px; color: var(--text); font-size: 0.95rem; line-height: 1.6; resize: vertical; outline: none; transition: border-color .2s; }
     textarea:focus { border-color: var(--accent); }
     textarea::placeholder { color: var(--muted); }
 
-    .btn {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      padding: 11px 22px;
-      border-radius: 8px;
-      font-size: 0.9rem;
-      font-weight: 600;
-      border: none;
-      cursor: pointer;
-      transition: all .15s;
-    }
+    .btn { display: inline-flex; align-items: center; gap: 8px; padding: 11px 22px; border-radius: 8px; font-size: 0.9rem; font-weight: 600; border: none; cursor: pointer; transition: all .15s; }
     .btn-primary { background: var(--accent); color: #fff; }
     .btn-primary:hover { background: var(--accent-hover); }
     .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
     .btn-success { background: var(--success); color: #fff; }
-    .btn-success:hover { filter: brightness(1.1); }
     .btn-success:disabled { opacity: 0.5; cursor: not-allowed; }
     .btn-ghost { background: var(--surface2); color: var(--text); border: 1px solid var(--border); }
     .btn-ghost:hover { background: var(--border); }
 
-    .row { display: flex; gap: 12px; margin-top: 20px; align-items: center; }
+    .row { display: flex; gap: 12px; margin-top: 20px; align-items: center; flex-wrap: wrap; }
 
-    .spinner {
-      display: none;
-      width: 18px; height: 18px;
-      border: 2px solid rgba(255,255,255,.3);
-      border-top-color: #fff;
-      border-radius: 50%;
-      animation: spin .6s linear infinite;
-    }
+    .spinner { display: none; width: 18px; height: 18px; border: 2px solid rgba(255,255,255,.3); border-top-color: #fff; border-radius: 50%; animation: spin .6s linear infinite; }
     @keyframes spin { to { transform: rotate(360deg); } }
 
+    /* Transcription result */
+    .transcription-box { background: var(--surface2); border: 1px solid var(--success); border-radius: 8px; padding: 14px 16px; margin-bottom: 16px; font-size: 0.9rem; line-height: 1.6; color: var(--text); display: none; }
+    .transcription-box .transcription-label { font-size: 0.75rem; color: var(--success); font-weight: 700; margin-bottom: 6px; text-transform: uppercase; letter-spacing: .05em; }
+
     /* Review panel */
-    .review-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 20px;
-    }
-
-    .task-count {
-      background: var(--accent);
-      color: #fff;
-      padding: 3px 10px;
-      border-radius: 20px;
-      font-size: 0.8rem;
-      font-weight: 700;
-    }
-
-    .tasks-grid {
-      display: flex;
-      flex-direction: column;
-      gap: 14px;
-      margin-bottom: 24px;
-    }
-
-    .task-card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 20px;
-      position: relative;
-    }
-    .task-card.excluded {
-      opacity: 0.4;
-      border-style: dashed;
-    }
-
-    .task-card-header {
-      display: flex;
-      align-items: flex-start;
-      gap: 12px;
-      margin-bottom: 12px;
-    }
-
-    .task-checkbox {
-      width: 20px; height: 20px;
-      margin-top: 2px;
-      accent-color: var(--accent);
-      cursor: pointer;
-      flex-shrink: 0;
-    }
-
-    .task-title-input {
-      flex: 1;
-      background: transparent;
-      border: none;
-      border-bottom: 1px solid transparent;
-      color: var(--text);
-      font-size: 1rem;
-      font-weight: 600;
-      outline: none;
-      transition: border-color .2s;
-      padding-bottom: 2px;
-    }
+    .review-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
+    .task-count { background: var(--accent); color: #fff; padding: 3px 10px; border-radius: 20px; font-size: 0.8rem; font-weight: 700; }
+    .tasks-grid { display: flex; flex-direction: column; gap: 14px; margin-bottom: 24px; }
+    .task-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; }
+    .task-card.excluded { opacity: 0.4; border-style: dashed; }
+    .task-card-header { display: flex; align-items: flex-start; gap: 12px; margin-bottom: 12px; }
+    .task-checkbox { width: 20px; height: 20px; margin-top: 2px; accent-color: var(--accent); cursor: pointer; flex-shrink: 0; }
+    .task-title-input { flex: 1; background: transparent; border: none; border-bottom: 1px solid transparent; color: var(--text); font-size: 1rem; font-weight: 600; outline: none; transition: border-color .2s; padding-bottom: 2px; }
     .task-title-input:focus { border-bottom-color: var(--accent); }
-
-    .task-meta {
-      display: flex;
-      gap: 10px;
-      flex-wrap: wrap;
-      margin-bottom: 10px;
-      padding-left: 32px;
-    }
-
-    .select-field {
-      background: var(--surface2);
-      border: 1px solid var(--border);
-      border-radius: 6px;
-      color: var(--text);
-      font-size: 0.82rem;
-      padding: 5px 10px;
-      outline: none;
-      cursor: pointer;
-    }
+    .task-meta { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 10px; padding-left: 32px; }
+    .select-field { background: var(--surface2); border: 1px solid var(--border); border-radius: 6px; color: var(--text); font-size: 0.82rem; padding: 5px 10px; outline: none; cursor: pointer; }
     .select-field:focus { border-color: var(--accent); }
-
-    .date-field {
-      background: var(--surface2);
-      border: 1px solid var(--border);
-      border-radius: 6px;
-      color: var(--text);
-      font-size: 0.82rem;
-      padding: 5px 10px;
-      outline: none;
-    }
-    .date-field:focus { border-color: var(--accent); }
+    .date-field { background: var(--surface2); border: 1px solid var(--border); border-radius: 6px; color: var(--text); font-size: 0.82rem; padding: 5px 10px; outline: none; }
     .date-field::-webkit-calendar-picker-indicator { filter: invert(0.7); }
-
-    .task-desc-input {
-      width: 100%;
-      background: var(--surface2);
-      border: 1px solid var(--border);
-      border-radius: 6px;
-      color: var(--text);
-      font-size: 0.88rem;
-      padding: 10px 12px;
-      outline: none;
-      resize: vertical;
-      min-height: 60px;
-      line-height: 1.5;
-      margin-left: 32px;
-      width: calc(100% - 32px);
-    }
+    .task-desc-input { background: var(--surface2); border: 1px solid var(--border); border-radius: 6px; color: var(--text); font-size: 0.88rem; padding: 10px 12px; outline: none; resize: vertical; min-height: 60px; line-height: 1.5; margin-left: 32px; width: calc(100% - 32px); }
     .task-desc-input:focus { border-color: var(--accent); }
 
-    .badge {
-      display: inline-flex;
-      align-items: center;
-      padding: 3px 9px;
-      border-radius: 20px;
-      font-size: 0.75rem;
-      font-weight: 600;
-    }
-    .badge-urgent  { background: #3d1515; color: #f87171; }
-    .badge-high    { background: #3d2a10; color: #fb923c; }
-    .badge-normal  { background: #1a2840; color: #60a5fa; }
-    .badge-low     { background: #1a2e1a; color: #86efac; }
-
-    /* Results panel */
+    /* Results */
     .results-list { display: flex; flex-direction: column; gap: 10px; }
-
-    .result-item {
-      display: flex;
-      align-items: center;
-      gap: 14px;
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 14px 18px;
-    }
-
-    .result-icon {
-      width: 32px; height: 32px;
-      border-radius: 50%;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 16px;
-      flex-shrink: 0;
-    }
+    .result-item { display: flex; align-items: center; gap: 14px; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 14px 18px; }
+    .result-icon { width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0; }
     .result-icon.success { background: rgba(34,197,94,.15); color: var(--success); }
     .result-icon.error   { background: rgba(239,68,68,.15);  color: var(--danger); }
-
     .result-info { flex: 1; }
     .result-title { font-weight: 600; font-size: 0.92rem; }
     .result-sub   { font-size: 0.8rem; color: var(--muted); margin-top: 2px; }
-
-    .clickup-link {
-      font-size: 0.8rem;
-      color: var(--accent);
-      text-decoration: none;
-    }
+    .clickup-link { font-size: 0.8rem; color: var(--accent); text-decoration: none; }
     .clickup-link:hover { text-decoration: underline; }
-
-    .summary-bar {
-      background: var(--surface2);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 18px 22px;
-      margin-bottom: 24px;
-      display: flex;
-      gap: 32px;
-    }
-
+    .summary-bar { background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius); padding: 18px 22px; margin-bottom: 24px; display: flex; gap: 32px; }
     .summary-stat label { font-size: 0.75rem; color: var(--muted); display: block; }
     .summary-stat span  { font-size: 1.4rem; font-weight: 700; }
     .summary-stat .green { color: var(--success); }
     .summary-stat .red   { color: var(--danger); }
 
-    .alert {
-      padding: 12px 16px;
-      border-radius: 8px;
-      font-size: 0.875rem;
-      margin-top: 12px;
-    }
-    .alert-error { background: rgba(239,68,68,.12); border: 1px solid rgba(239,68,68,.3); color: #f87171; }
-    .alert-success { background: rgba(34,197,94,.12); border: 1px solid rgba(34,197,94,.3); color: #86efac; }
+    .alert { padding: 12px 16px; border-radius: 8px; font-size: 0.875rem; margin-top: 12px; }
+    .alert-error   { background: rgba(239,68,68,.12); border: 1px solid rgba(239,68,68,.3); color: #f87171; }
+    .alert-success { background: rgba(34,197,94,.12);  border: 1px solid rgba(34,197,94,.3); color: #86efac; }
 
-    @media (max-width: 600px) {
-      .steps { flex-direction: column; }
-      .step { border-right: none; border-bottom: 1px solid var(--border); }
-    }
+    .file-name { font-size: 0.85rem; color: var(--success); margin-top: 8px; }
   </style>
 </head>
 <body>
@@ -359,39 +122,49 @@
   <div class="logo">🤖</div>
   <div>
     <h1>Meeting → ClickUp</h1>
-    <p>AI-powered task extraction & auto-assignment</p>
+    <p>Powered by Groq — transcribe audio or paste text</p>
   </div>
 </header>
 
 <div class="container">
 
-  <!-- Step indicator -->
   <div class="steps">
-    <div class="step active" id="step1-indicator">
-      <div class="step-num">1</div>
-      <div class="step-label">Paste Meeting</div>
-    </div>
-    <div class="step" id="step2-indicator">
-      <div class="step-num">2</div>
-      <div class="step-label">Review Tasks</div>
-    </div>
-    <div class="step" id="step3-indicator">
-      <div class="step-num">3</div>
-      <div class="step-label">Sent to ClickUp</div>
-    </div>
+    <div class="step active" id="step1-indicator"><div class="step-num">1</div><div class="step-label">Input Meeting</div></div>
+    <div class="step"        id="step2-indicator"><div class="step-num">2</div><div class="step-label">Review Tasks</div></div>
+    <div class="step"        id="step3-indicator"><div class="step-num">3</div><div class="step-label">Sent to ClickUp</div></div>
   </div>
 
   <!-- Panel 1: Input -->
   <div class="panel active" id="panel1">
     <div class="input-card">
-      <label>Meeting Notes / Transcript</label>
-      <textarea id="meetingText" placeholder="Paste your meeting notes here...
 
-Example:
-- Bader will prepare the client proposal by next Monday
-- Yousef needs to fix the login bug urgently  
-- We agreed to update the roadmap — Sudheesh will handle this
-- General company update: Q2 planning starts this week"></textarea>
+      <!-- Audio Upload -->
+      <label>Option 1 — Upload Meeting Audio</label>
+      <div class="upload-area" id="uploadArea" onclick="document.getElementById('audioFileInput').click()">
+        <div class="icon">🎙️</div>
+        <p><strong>Click to upload</strong> or drag & drop</p>
+        <p>MP3, MP4, WAV, M4A — Arabic & English supported</p>
+        <div class="file-name" id="fileName"></div>
+      </div>
+      <input type="file" id="audioFileInput" accept="audio/*,video/mp4" onchange="handleFileSelect(event)">
+
+      <div id="transcriptionBox" class="transcription-box">
+        <div class="transcription-label">✅ Transcription Result</div>
+        <div id="transcriptionText"></div>
+      </div>
+
+      <div class="row">
+        <button class="btn btn-primary" id="transcribeBtn" onclick="transcribeAudio()" style="display:none">
+          <div class="spinner" id="transcribeSpinner"></div>
+          <span id="transcribeBtnText">🎙️ Transcribe Audio</span>
+        </button>
+      </div>
+
+      <div class="divider">OR</div>
+
+      <!-- Text Input -->
+      <label>Option 2 — Paste Meeting Notes</label>
+      <textarea id="meetingText" placeholder="Paste your meeting notes here..."></textarea>
 
       <div id="inputError"></div>
 
@@ -400,8 +173,9 @@ Example:
           <div class="spinner" id="extractSpinner"></div>
           <span id="extractBtnText">✨ Extract Tasks with AI</span>
         </button>
-        <span style="color: var(--muted); font-size: 0.82rem;">Claude will identify tasks, assignees & priorities</span>
+        <span style="color:var(--muted); font-size:0.82rem;">Groq AI will identify tasks, assignees & priorities</span>
       </div>
+
     </div>
   </div>
 
@@ -414,15 +188,9 @@ Example:
       </div>
       <button class="btn btn-ghost" onclick="goBack()">← Back</button>
     </div>
-
-    <p style="color:var(--muted); font-size:0.87rem; margin-bottom:20px;">
-      Edit any task below. Uncheck to exclude it. When ready, click <strong>Send to ClickUp</strong>.
-    </p>
-
+    <p style="color:var(--muted); font-size:0.87rem; margin-bottom:20px;">Edit any task. Uncheck to exclude. Then click Send to ClickUp.</p>
     <div class="tasks-grid" id="tasksGrid"></div>
-
     <div id="reviewError"></div>
-
     <div class="row">
       <button class="btn btn-success" id="sendBtn" onclick="sendToClickUp()">
         <div class="spinner" id="sendSpinner"></div>
@@ -445,21 +213,10 @@ Example:
 
 <script>
 let extractedTasks = [];
+let selectedFile = null;
 
-const ASSIGNEE_LABELS = {
-  sudheesh: "👤 Sudheesh",
-  bader:    "👤 Bader",
-  yousef:   "👤 Yousef",
-  me:       "👤 Me",
-  general:  "🌐 General"
-};
-
-const PRIORITY_LABELS = {
-  urgent: "🔴 Urgent",
-  high:   "🟠 High",
-  normal: "🔵 Normal",
-  low:    "🟢 Low"
-};
+const ASSIGNEE_LABELS = { sudheesh:"👤 Sudheesh", bader:"👤 Bader", yousef:"👤 Yousef", me:"👤 Me", general:"🌐 General" };
+const PRIORITY_LABELS = { urgent:"🔴 Urgent", high:"🟠 High", normal:"🔵 Normal", low:"🟢 Low" };
 
 function setStep(n) {
   [1,2,3].forEach(i => {
@@ -472,193 +229,173 @@ function setStep(n) {
   document.getElementById(`panel${n}`).classList.add('active');
 }
 
+// ── Audio ──────────────────────────────────────────────────────────────────
+
+function handleFileSelect(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  selectedFile = file;
+  document.getElementById('fileName').textContent = '📎 ' + file.name;
+  document.getElementById('transcribeBtn').style.display = 'inline-flex';
+}
+
+const uploadArea = document.getElementById('uploadArea');
+uploadArea.addEventListener('dragover', e => { e.preventDefault(); uploadArea.classList.add('dragover'); });
+uploadArea.addEventListener('dragleave', () => uploadArea.classList.remove('dragover'));
+uploadArea.addEventListener('drop', e => {
+  e.preventDefault();
+  uploadArea.classList.remove('dragover');
+  const file = e.dataTransfer.files[0];
+  if (file) { selectedFile = file; document.getElementById('fileName').textContent = '📎 ' + file.name; document.getElementById('transcribeBtn').style.display = 'inline-flex'; }
+});
+
+async function transcribeAudio() {
+  if (!selectedFile) return;
+  const btn = document.getElementById('transcribeBtn');
+  const spinner = document.getElementById('transcribeSpinner');
+  const btnText = document.getElementById('transcribeBtnText');
+  btn.disabled = true; spinner.style.display = 'block'; btnText.textContent = 'Transcribing...';
+
+  try {
+    const formData = new FormData();
+    formData.append('audio', selectedFile);
+    const res = await fetch('/api/transcribe', { method: 'POST', body: formData });
+    const data = await res.json();
+    if (!res.ok || data.error) { document.getElementById('inputError').innerHTML = `<div class="alert alert-error">Error: ${data.error}</div>`; return; }
+    document.getElementById('meetingText').value = data.text;
+    const box = document.getElementById('transcriptionBox');
+    document.getElementById('transcriptionText').textContent = data.text;
+    box.style.display = 'block';
+  } catch(e) {
+    document.getElementById('inputError').innerHTML = `<div class="alert alert-error">Network error: ${e.message}</div>`;
+  } finally {
+    btn.disabled = false; spinner.style.display = 'none'; btnText.textContent = '🎙️ Transcribe Audio';
+  }
+}
+
+// ── Extract ────────────────────────────────────────────────────────────────
+
 async function extractTasks() {
   const text = document.getElementById('meetingText').value.trim();
   const errEl = document.getElementById('inputError');
   errEl.innerHTML = '';
-
-  if (!text) {
-    errEl.innerHTML = '<div class="alert alert-error">Please paste your meeting notes first.</div>';
-    return;
-  }
+  if (!text) { errEl.innerHTML = '<div class="alert alert-error">Please paste meeting notes or transcribe audio first.</div>'; return; }
 
   const btn = document.getElementById('extractBtn');
   const spinner = document.getElementById('extractSpinner');
   const btnText = document.getElementById('extractBtnText');
-
-  btn.disabled = true;
-  spinner.style.display = 'block';
-  btnText.textContent = 'Analyzing...';
+  btn.disabled = true; spinner.style.display = 'block'; btnText.textContent = 'Analyzing...';
 
   try {
-    const res = await fetch('/api/extract', {
-      method: 'POST',
-      headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({meeting_text: text})
-    });
+    const res = await fetch('/api/extract', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({meeting_text: text}) });
     const data = await res.json();
-
-    if (!res.ok || data.error) {
-      errEl.innerHTML = `<div class="alert alert-error">Error: ${data.error}</div>`;
-      return;
-    }
-
+    if (!res.ok || data.error) { errEl.innerHTML = `<div class="alert alert-error">Error: ${data.error}</div>`; return; }
     extractedTasks = data.tasks;
     renderReview(extractedTasks);
     setStep(2);
   } catch(e) {
     errEl.innerHTML = `<div class="alert alert-error">Network error: ${e.message}</div>`;
   } finally {
-    btn.disabled = false;
-    spinner.style.display = 'none';
-    btnText.textContent = '✨ Extract Tasks with AI';
+    btn.disabled = false; spinner.style.display = 'none'; btnText.textContent = '✨ Extract Tasks with AI';
   }
 }
 
-function renderReview(tasks) {
-  const grid = document.getElementById('tasksGrid');
-  const badge = document.getElementById('taskCountBadge');
-  badge.textContent = `${tasks.length} task${tasks.length !== 1 ? 's' : ''}`;
+// ── Review ─────────────────────────────────────────────────────────────────
 
-  grid.innerHTML = tasks.map((task, i) => `
+function renderReview(tasks) {
+  document.getElementById('taskCountBadge').textContent = `${tasks.length} task${tasks.length !== 1 ? 's' : ''}`;
+  document.getElementById('tasksGrid').innerHTML = tasks.map((task, i) => `
     <div class="task-card" id="taskCard${i}">
       <div class="task-card-header">
         <input type="checkbox" class="task-checkbox" id="chk${i}" checked onchange="toggleTask(${i})">
         <input type="text" class="task-title-input" id="title${i}" value="${escHtml(task.title)}">
       </div>
       <div class="task-meta">
-        <select class="select-field" id="assignee${i}" onchange="updateBadge()">
-          ${Object.keys(ASSIGNEE_LABELS).map(a =>
-            `<option value="${a}" ${a === task.assignee ? 'selected' : ''}>${ASSIGNEE_LABELS[a]}</option>`
-          ).join('')}
+        <select class="select-field" id="assignee${i}">
+          ${Object.keys(ASSIGNEE_LABELS).map(a => `<option value="${a}" ${a===task.assignee?'selected':''}>${ASSIGNEE_LABELS[a]}</option>`).join('')}
         </select>
         <select class="select-field" id="priority${i}">
-          ${Object.keys(PRIORITY_LABELS).map(p =>
-            `<option value="${p}" ${p === task.priority ? 'selected' : ''}>${PRIORITY_LABELS[p]}</option>`
-          ).join('')}
+          ${Object.keys(PRIORITY_LABELS).map(p => `<option value="${p}" ${p===task.priority?'selected':''}>${PRIORITY_LABELS[p]}</option>`).join('')}
         </select>
-        <input type="date" class="date-field" id="duedate${i}" value="${task.due_date || ''}">
+        <input type="date" class="date-field" id="duedate${i}" value="${task.due_date||''}">
       </div>
-      <textarea class="task-desc-input" id="desc${i}" rows="2">${escHtml(task.description || '')}</textarea>
+      <textarea class="task-desc-input" id="desc${i}" rows="2">${escHtml(task.description||'')}</textarea>
     </div>
   `).join('');
-
   updateBadge();
 }
 
 function toggleTask(i) {
-  const checked = document.getElementById(`chk${i}`).checked;
-  document.getElementById(`taskCard${i}`).classList.toggle('excluded', !checked);
+  document.getElementById(`taskCard${i}`).classList.toggle('excluded', !document.getElementById(`chk${i}`).checked);
   updateBadge();
 }
 
 function updateBadge() {
-  const checkboxes = document.querySelectorAll('.task-checkbox');
-  const selected = Array.from(checkboxes).filter(c => c.checked).length;
-  document.getElementById('selectedCount').textContent =
-    `${selected} of ${checkboxes.length} tasks selected`;
+  const all = document.querySelectorAll('.task-checkbox');
+  const selected = Array.from(all).filter(c => c.checked).length;
+  document.getElementById('selectedCount').textContent = `${selected} of ${all.length} tasks selected`;
 }
 
 function getApprovedTasks() {
-  return extractedTasks.map((_, i) => {
-    const checked = document.getElementById(`chk${i}`)?.checked;
-    if (!checked) return null;
+  return extractedTasks.map((_,i) => {
+    if (!document.getElementById(`chk${i}`)?.checked) return null;
     return {
-      title:    document.getElementById(`title${i}`).value.trim(),
+      title:       document.getElementById(`title${i}`).value.trim(),
       description: document.getElementById(`desc${i}`).value.trim(),
-      assignee: document.getElementById(`assignee${i}`).value,
-      priority: document.getElementById(`priority${i}`).value,
-      due_date: document.getElementById(`duedate${i}`).value || null,
+      assignee:    document.getElementById(`assignee${i}`).value,
+      priority:    document.getElementById(`priority${i}`).value,
+      due_date:    document.getElementById(`duedate${i}`).value || null,
     };
   }).filter(Boolean);
 }
+
+// ── Send ───────────────────────────────────────────────────────────────────
 
 async function sendToClickUp() {
   const tasks = getApprovedTasks();
   const errEl = document.getElementById('reviewError');
   errEl.innerHTML = '';
-
-  if (!tasks.length) {
-    errEl.innerHTML = '<div class="alert alert-error">No tasks selected. Check at least one task.</div>';
-    return;
-  }
+  if (!tasks.length) { errEl.innerHTML = '<div class="alert alert-error">No tasks selected.</div>'; return; }
 
   const btn = document.getElementById('sendBtn');
   const spinner = document.getElementById('sendSpinner');
   const btnText = document.getElementById('sendBtnText');
-
-  btn.disabled = true;
-  spinner.style.display = 'block';
-  btnText.textContent = 'Sending...';
+  btn.disabled = true; spinner.style.display = 'block'; btnText.textContent = 'Sending...';
 
   try {
-    const res = await fetch('/api/create-tasks', {
-      method: 'POST',
-      headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({tasks})
-    });
+    const res = await fetch('/api/create-tasks', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({tasks}) });
     const data = await res.json();
-
-    if (!res.ok || data.error) {
-      errEl.innerHTML = `<div class="alert alert-error">Error: ${data.error}</div>`;
-      return;
-    }
-
+    if (!res.ok || data.error) { errEl.innerHTML = `<div class="alert alert-error">Error: ${data.error}</div>`; return; }
     renderResults(data.results);
     setStep(3);
   } catch(e) {
     errEl.innerHTML = `<div class="alert alert-error">Network error: ${e.message}</div>`;
   } finally {
-    btn.disabled = false;
-    spinner.style.display = 'none';
-    btnText.textContent = '🚀 Send to ClickUp';
+    btn.disabled = false; spinner.style.display = 'none'; btnText.textContent = '🚀 Send to ClickUp';
   }
 }
 
 function renderResults(results) {
-  const successCount = results.filter(r => r.status === 'success').length;
-  const errorCount   = results.filter(r => r.status === 'error').length;
-
+  const s = results.filter(r => r.status==='success').length;
+  const f = results.filter(r => r.status==='error').length;
   document.getElementById('summaryBar').innerHTML = `
-    <div class="summary-stat">
-      <label>Total Sent</label>
-      <span>${results.length}</span>
-    </div>
-    <div class="summary-stat">
-      <label>Created</label>
-      <span class="green">${successCount}</span>
-    </div>
-    ${errorCount ? `<div class="summary-stat">
-      <label>Failed</label>
-      <span class="red">${errorCount}</span>
-    </div>` : ''}
-  `;
-
+    <div class="summary-stat"><label>Total</label><span>${results.length}</span></div>
+    <div class="summary-stat"><label>Created</label><span class="green">${s}</span></div>
+    ${f ? `<div class="summary-stat"><label>Failed</label><span class="red">${f}</span></div>` : ''}`;
   document.getElementById('resultsList').innerHTML = results.map(r => `
     <div class="result-item">
-      <div class="result-icon ${r.status}">${r.status === 'success' ? '✓' : '✗'}</div>
+      <div class="result-icon ${r.status}">${r.status==='success'?'✓':'✗'}</div>
       <div class="result-info">
         <div class="result-title">${escHtml(r.title)}</div>
-        <div class="result-sub">${ASSIGNEE_LABELS[r.assignee] || r.assignee}
-          ${r.status === 'error' ? `· <span style="color:var(--danger)">${escHtml(r.error)}</span>` : ''}
-        </div>
+        <div class="result-sub">${ASSIGNEE_LABELS[r.assignee]||r.assignee}${r.status==='error'?` · <span style="color:var(--danger)">${escHtml(r.error)}</span>`:''}</div>
       </div>
-      ${r.clickup_url ? `<a href="${r.clickup_url}" target="_blank" class="clickup-link">Open ↗</a>` : ''}
-    </div>
-  `).join('');
+      ${r.clickup_url?`<a href="${r.clickup_url}" target="_blank" class="clickup-link">Open ↗</a>`:''}
+    </div>`).join('');
 }
 
-function goBack() { setStep(1); }
-
-function startOver() {
-  document.getElementById('meetingText').value = '';
-  extractedTasks = [];
-  setStep(1);
-}
-
-function escHtml(str) {
-  return (str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-}
+function goBack()    { setStep(1); }
+function startOver() { document.getElementById('meetingText').value=''; document.getElementById('transcriptionBox').style.display='none'; document.getElementById('fileName').textContent=''; document.getElementById('transcribeBtn').style.display='none'; selectedFile=null; extractedTasks=[]; setStep(1); }
+function escHtml(str) { return (str||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 </script>
 </body>
 </html>
