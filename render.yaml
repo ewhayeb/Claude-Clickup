@@ -5,7 +5,42 @@ services:
     buildCommand: pip install -r requirements.txt
     startCommand: gunicorn app:app --bind 0.0.0.0:$PORT
     envVars:
-      - key: ANTHROPIC_API_KEY
+      - key: GEMINI_API_KEY
         sync: false
       - key: CLICKUP_API_TOKEN
         sync: false
+```
+4. Click **"Commit changes"** → **"Commit changes"**
+
+---
+
+## Step 3 — Update Environment Variables on Render
+
+1. Go to **render.com** → your service **`meeting-to-clickup`**
+2. Click **"Environment"** in the left sidebar
+3. Find `ANTHROPIC_API_KEY` → click the **three dots (...)** next to it → **"Delete"**
+4. Click **"Add Environment Variable"**
+   - Key: `GEMINI_API_KEY`
+   - Value: paste the key you got from Google AI Studio
+5. Click **"Save Changes"**
+
+---
+
+## Step 4 — Redeploy
+
+1. Click **"Events"** in the left sidebar
+2. Click **"Manual Deploy"** → **"Deploy latest commit"**
+3. Wait 2–3 minutes for the build to finish
+4. Once you see **"Live"** ✅ — your app is ready!
+
+---
+
+## Step 5 — Test It
+
+1. Open your app URL (e.g. `https://meeting-to-clickup.onrender.com`)
+2. Paste a sample meeting text like:
+```
+Bader will prepare the client proposal by next Sunday.
+Yousef needs to fix the login bug urgently.
+Sudheesh will update the project roadmap this week.
+We need to schedule a general team meeting next month.
