@@ -23,7 +23,7 @@ def extract_tasks_from_meeting(meeting_text: str) -> list[dict]:
     """Use Gemini to extract tasks from meeting notes."""
 
     genai.configure(api_key=GEMINI_API_KEY)
-    model = genai.GenerativeModel("gemini-1.5-flash")
+    model = genai.GenerativeModel("gemini-2.0-flash")
 
     prompt = """You are an expert at analyzing meeting notes and extracting actionable tasks.
 
